@@ -1,8 +1,9 @@
 import express from "express";
+import { eduUsersTest } from "../app/middlewares/edu/edu.middleware.js";
 
 const usersRouter = express.Router();
 
-usersRouter.get('/api/users/', (request, response, next) => {
+usersRouter.get('/', eduUsersTest, (request, response, next) => {
   response.status(200).send('유저 정보 전체 조회 완료');
 });
 
