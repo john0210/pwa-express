@@ -2,7 +2,7 @@ import express, { response } from 'express';
 import db from '../app/models/index.js';
 import Sequelize, { Op } from 'sequelize';
 import dayjs from 'dayjs';
-const { sequelize, Employee } = db;
+const { sequelize, Employee, TitleEmp, Title } = db;
 
 const eduRouter = express.Router();
 
@@ -71,18 +71,18 @@ eduRouter.get('/api/edu', async (request, response, next) => {
 
     // update(values, option) : 기존 레코드 수정 (영향받은 레코드 수 반환)
     // UPDATE employees SET name = "사자" WHERE emp_id >= 100008;
-    result = await Employee.update(
-      {
-        name: '사자'
-      }
-      ,{
-        where: {
-          empId:{
-            [Op.gte]: 100008  
-          }
-        }
-      }
-    );
+    // result = await Employee.update(
+    //   {
+    //     name: '사자'
+    //   }
+    //   ,{
+    //     where: {
+    //       empId:{
+    //         [Op.gte]: 100008  
+    //       }
+    //     }
+    //   }
+    // );
 
     // save() : 모델 인스턴스를 기반으로 레코드 생성 및 수정
     // const employee = await Employee.findByPk(100008);
@@ -117,24 +117,24 @@ eduRouter.get('/api/edu', async (request, response, next) => {
 
 
     // 이름이 '강가람'이고, 성별이 여자인 사원 정보 조회
-    result = await Employee.findAll({
-      attributes: ['empId', 'name', 'gender'],
-      where: {
-        name: '강가람',
-        gender: 'F',
-      }
-    });
+    // result = await Employee.findAll({
+    //   attributes: ['empId', 'name', 'gender'],
+    //   where: {
+    //     name: '강가람',
+    //     gender: 'F',
+    //   }
+    // });
 
-    // 이름이 '강가람' 또는 '신서연'인 사원 조회
-    result = await Employee.findAll({
-      attributes: ['empId', 'name', 'gender'],
-      where: {
-        [Op.or]: [
-          { name: '강가람' },
-          { name: '신서연' }
-        ],
-      }
-    }); 
+    // // 이름이 '강가람' 또는 '신서연'인 사원 조회
+    // result = await Employee.findAll({
+    //   attributes: ['empId', 'name', 'gender'],
+    //   where: {
+    //     [Op.or]: [
+    //       { name: '강가람' },
+    //       { name: '신서연' }
+    //     ],
+    //   }
+    // }); 
     
     // 성별이 여자이고, 이름이 '강가람' 또는 '신서연'인 사원
     // result = await Employee.findAll({
@@ -184,15 +184,43 @@ eduRouter.get('/api/edu', async (request, response, next) => {
     // });
 
     // Groupby, having
-    result = await Employee.findAll({
-      attributes:[
-      'gender', 
-      [sequelize.fn('COUNT', sequelize.col('*')), 'cnt_gender']
-      ],
-      group: ['gender'],
-      having: sequelize.literal('cnt_gender >= 40000'),
-    });
+    // result = await Employee.findAll({
+    //   attributes:[
+    //   'gender', 
+    //   [sequelize.fn('COUNT', sequelize.col('*')), 'cnt_gender']
+    //   ],
+    //   group: ['gender'],
+    //   having: sequelize.literal('cnt_gender >= 40000'),
+    // });
  
+    // join
+    result = await Employee.findOne({
+      attributes: ['empId', 'name'],
+      where: {
+        empId: 1
+      },      
+      include: [
+        {
+          model: TitleEmp, // 내가 연결할 모델
+          as: 'titleEmps', // 내가 사용할 관계 별칭
+          required: true, // true면 이너 조인, false면 레프트 아우터 조인
+          attributes: ['titleCode'],
+          where: {
+            endAt: {
+              [Op.is]: null,
+            }
+          },
+          include: [
+            {
+              model: Title,
+              as: 'title',              
+              required: true,
+              attributes: ['title'],
+            }
+          ]
+        }
+      ],
+    });
 
     return response.status(200).send({
       msg:'정상 처리',
